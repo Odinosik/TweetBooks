@@ -238,6 +238,37 @@ namespace TweetBook.Data.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("Tweetbook.Domain.RefreshToken", b =>
+                {
+                    b.Property<string>("Token")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Invalidated")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JwtId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Used")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Token");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -290,6 +321,13 @@ namespace TweetBook.Data.Migrations
                 });
 
             modelBuilder.Entity("Tweetbook.Domain.Post", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("Tweetbook.Domain.RefreshToken", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()

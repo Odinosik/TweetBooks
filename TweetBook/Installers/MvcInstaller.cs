@@ -20,6 +20,16 @@ namespace Tweetbook.Installers
 
             services.AddScoped<IIdentityService, IdentityService>();
 
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings.Secret)),
+                ValidateAudience = false,
+                ValidateIssuer = false,
+                RequireExpirationTime = false,
+                ValidateLifetime = true
+            };
+
             services.AddAuthentication(x =>
             {
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -29,18 +39,10 @@ namespace Tweetbook.Installers
                 .AddJwtBearer(x =>
                 {
                     x.SaveToken = true;
-                    x.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSettings.Secret)),
-                        ValidateAudience = false,
-                        ValidateIssuer = false,
-                        RequireExpirationTime = false,
-                        ValidateLifetime = true
-                    };
+                    x.TokenValidationParameters = tokenValidationParameters;
                 });
 
-            
+            services.AddSingleton(tokenValidationParameters);
 
             services.AddSwaggerGen(x =>
             {
