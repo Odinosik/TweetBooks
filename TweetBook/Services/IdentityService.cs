@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -39,11 +40,16 @@ namespace Tweetbook.Services
                     Errors = new[] { "User with this email address already exists" }
                 };
             }
+
+            var newUserId = Guid.NewGuid();
             var newUser = new IdentityUser
             {
+                Id = newUserId.ToString(),
                 Email = email,
                 UserName = email
             };
+
+
             var createdUser = await _userManager.CreateAsync(newUser, password);
             if (!createdUser.Succeeded)
             {
@@ -52,6 +58,8 @@ namespace Tweetbook.Services
                     Errors = createdUser.Errors.Select(x => x.Description)
                 };
             }
+
+            await _userManager.AddClaimAsync(newUser, new Claim("tags.view", "true"));
 
             return await GenerateAuthenticationResultForUserAsync(newUser);
         }
@@ -174,14 +182,22 @@ namespace Tweetbook.Services
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_jwtSettings.Secret);
-            var tokenDescription = new SecurityTokenDescriptor()
+
+            var claims = new List<Claim>
             {
-                Subject = new System.Security.Claims.ClaimsIdentity(new[] {
-                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     new Claim(JwtRegisteredClaimNames.Email, user.Email),
                     new Claim("id", user.Id)
-                }),
+            };
+
+            var userCliams = await _userManager.GetClaimsAsync(user);
+
+            claims.AddRange(userCliams);
+
+            var tokenDescription = new SecurityTokenDescriptor()
+            {
+                Subject = new System.Security.Claims.ClaimsIdentity(claims),
                 Expires = DateTime.UtcNow.Add(_jwtSettings.TokenLifeTime),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };

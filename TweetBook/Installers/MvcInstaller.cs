@@ -42,6 +42,11 @@ namespace Tweetbook.Installers
                     x.TokenValidationParameters = tokenValidationParameters;
                 });
 
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("tagViewer", builder => builder.RequireClaim("tags.view", "true"));
+            });
+
             services.AddSingleton(tokenValidationParameters);
 
             services.AddSwaggerGen(x =>
