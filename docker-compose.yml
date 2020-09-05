@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  tweetbook:
+    image: ${DOCKER_REGISTRY-}tweetbook
+    build:
+      context: .
+      dockerfile: TweetBook\Dockerfile
