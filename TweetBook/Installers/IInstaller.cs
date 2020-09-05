@@ -8,3 +8,4 @@ namespace Tweetbook.Installers
         void InstallServices(IServiceCollection services, IConfiguration configuration);
     }
 }
+    

@@ -10,7 +10,7 @@ using Tweetbook.Services;
 
 namespace Tweetbook.Controllers.V1
 {
-    public class IdentityController : ApiControllerBase
+    public class IdentityController : Controller
     {
         private readonly IIdentityService _identityService;
 
