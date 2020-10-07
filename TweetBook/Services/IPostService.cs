@@ -13,12 +13,16 @@ namespace Tweetbook.Services
 
         Task<bool> UpdatePostAsync(Post postToUpdate);
 
-        Task<bool> DeletePostAsync(Guid postToUpdate);
+        Task<bool> DeletePostAsync(Guid postToDelete);
 
         Task<bool> CreatePostAsync(Post post);
 
         Task<bool> UserOwnsPostAsync(Guid postId, string userId);
 
         Task<List<Tag>> GetAllTagsAsync();
+        Task<Tag> GetTagByNameAsync(string tagName);
+        Task<bool> CreateTagAsync(Tag tag);
+
+        Task<bool> DeleteTagAsync(string tagName);
     }
 }

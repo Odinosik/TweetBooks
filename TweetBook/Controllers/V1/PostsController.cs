@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -19,17 +21,19 @@ namespace Tweetbook.Controllers.V1
     public class PostsController : Controller
     {
         private readonly IPostService _postService;
-
-        public PostsController(IPostService postService)
+        private readonly IMapper _mapper;
+        public PostsController(IPostService postService, IMapper mapper)
         {
             _postService = postService;
+            _mapper = mapper;
         }
 
         [HttpGet(ApiRoutes.Posts.GetAll)]
         [ProducesResponseType(typeof(void), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetAll()
         {
-            return Ok(await _postService.GetPostsAsync());
+            var posts = await _postService.GetPostsAsync();
+            return Ok(_mapper.Map<List<PostResponse>>(posts));
         }
 
         [HttpGet(ApiRoutes.Posts.Get)]
@@ -42,7 +46,7 @@ namespace Tweetbook.Controllers.V1
             {
                 return NotFound();
             }
-            return Ok(post);
+            return Ok(_mapper.Map<PostResponse>(post));
         }
 
         [HttpPost(ApiRoutes.Posts.Create)]
@@ -55,13 +59,11 @@ namespace Tweetbook.Controllers.V1
                 UserId = HttpContext.GetUserId()
             };
             await _postService.CreatePostAsync(post);
-            var baseUri = $"{HttpContext.Request.Scheme}:///{HttpContext.Request.Host.ToUriComponent()}";
+            var baseUri = $"{HttpContext.Request.Scheme}://{HttpContext.Request.Host.ToUriComponent()}";
             var locationUri = baseUri + "/" + ApiRoutes.Posts.Get.Replace("{postId}", post.Id.ToString());
 
-            var response = new PostResponse { Id = post.Id };
-            return Created(locationUri, response);
+            return Created(locationUri, _mapper.Map<PostResponse>(post));
         }
-
         [HttpPut(ApiRoutes.Posts.Update)]
         [ProducesResponseType(typeof(void), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> Update([FromRoute] Guid postId, [FromBody] UpdatePostRequest request)

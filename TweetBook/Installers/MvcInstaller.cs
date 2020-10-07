@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Collections.Generic;
 using System.Text;
+using Tweetbook.Authorization;
 using Tweetbook.Options;
 using Tweetbook.Services;
 
@@ -30,6 +32,11 @@ namespace Tweetbook.Installers
                 ValidateLifetime = true
             };
 
+            services.AddCors(x => x.AddPolicy("MyPolicy", builder =>
+            {
+               builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+            }));
+
             services.AddAuthentication(x =>
             {
                 x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -44,8 +51,13 @@ namespace Tweetbook.Installers
 
             services.AddAuthorization(options =>
             {
-                options.AddPolicy("tagViewer", builder => builder.RequireClaim("tags.view", "true"));
+                options.AddPolicy("MustWorkForTest", policy =>
+                {
+                    policy.AddRequirements(new WorksForCompanyRequirement("test.com"));
+                });
             });
+
+            services.AddSingleton<IAuthorizationHandler, WorksForCompanyHandler>();
 
             services.AddSingleton(tokenValidationParameters);
 

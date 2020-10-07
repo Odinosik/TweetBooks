@@ -20,13 +20,15 @@ namespace Tweetbook.Services
         private readonly JwtSettings _jwtSettings;
         private readonly TokenValidationParameters _tokenValidationParameters;
         private readonly DataContext _datacontext;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public IdentityService(UserManager<IdentityUser> userManager, JwtSettings jwtSettings, TokenValidationParameters tokenValidationParameters, DataContext datecontext = null)
+        public IdentityService(UserManager<IdentityUser> userManager, JwtSettings jwtSettings, TokenValidationParameters tokenValidationParameters, RoleManager<IdentityRole> roleManager, DataContext datecontext = null)
         {
             _userManager = userManager;
             _jwtSettings = jwtSettings;
             _tokenValidationParameters = tokenValidationParameters;
             _datacontext = datecontext;
+            _roleManager = roleManager;
         }
 
         public async Task<AuthenticationResult> RegisterAsync(string email, string password)
@@ -191,9 +193,27 @@ namespace Tweetbook.Services
                     new Claim("id", user.Id)
             };
 
+            await _userManager.AddToRoleAsync(user, "Admin");
             var userCliams = await _userManager.GetClaimsAsync(user);
 
             claims.AddRange(userCliams);
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            foreach (var userRole in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, userRole));
+                var role = await _roleManager.FindByNameAsync(userRole);
+                if (role == null) continue;
+                var roleClaims = await _roleManager.GetClaimsAsync(role);
+
+                foreach (var roleClaim in roleClaims)
+                {
+                    if (claims.Contains(roleClaim))
+                        continue;
+
+                    claims.Add(roleClaim);
+                }
+            }
 
             var tokenDescription = new SecurityTokenDescriptor()
             {
